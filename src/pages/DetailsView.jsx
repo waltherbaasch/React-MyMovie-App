@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import axios from "axios";
 import { FaArrowLeft } from "react-icons/fa";
 import { Link, useLoaderData } from "react-router-dom";
@@ -11,57 +12,60 @@ const StyledHeader = styled.header`
   display: grid;
   grid-template-columns: 2;
   height: 232px;
+  background-color: ${(props) => (props.darkmode ? "#000" : "#fff")};
+  color: ${(props) => (props.darkmode ? "#fff" : "#000")};
 `;
-const StyledLink = styled(Link)`
-  position: relative; /* fix z position on safari mobile */
-  color: #fff;
-  grid-column-start: 1;
-  grid-row-start: 1;
-  margin-top: 2rem;
-  margin-left: 2rem;
-`;
+
 const StyledIframe = styled.iframe`
-  grid-column-start: 1;
-  grid-column-end: 3;
-  grid-row-start: 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
 `;
-const StyledSwitch = styled(Switch)`
-  grid-column-start: 2;
-  margin-top: 2rem;
-  margin-right: 2rem;
+
+const StyledLink = styled(Link)`
+  text-decoration: none;
+  color: inherit;
 `;
+
 const StyledMain = styled.main`
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  background-color: #fff;
-  border-radius: 10px 10px 0 0;
-  padding: 2rem;
-  margin-top: -10px;
+  background-color: ${(props) => (props.darkmode ? "#000" : "#fff")};
+  color: ${(props) => (props.darkmode ? "#fff" : "#000")};
 `;
 
 const DetailsView = () => {
   const DetailData = useLoaderData();
+  const [darkmode, setDarkMode] = useState(false); // Initialize dark mode as false
+
+  const handleDarkModeToggle = () => {
+    // Toggle dark mode when the switch is flipped
+    setDarkMode(!darkmode);
+  };
+
   console.log("DetailsData: ", DetailData);
+
   return (
     <>
-      <StyledHeader>
+      <StyledHeader darkmode={darkmode}>
         <StyledIframe
-          width="100%"
-          height="100%"
           src={`https://www.youtube-nocookie.com/embed/${DetailData.details.videos.results[0].key}`}
           title="YouTube video player"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
         ></StyledIframe>
         <StyledLink to="/">
           <FaArrowLeft />
         </StyledLink>
-        <StyledSwitch justify="end" align="top" />
+        <Switch
+          justify="end"
+          align="top"
+          darkmode={darkmode}
+          onToggle={handleDarkModeToggle}
+        />
       </StyledHeader>
-      <StyledMain>
+      <StyledMain darkmode={darkmode}>
         <MovieInfo data={DetailData.details} />
         <MovieDescription data={DetailData.details} />
         <MovieCast data={DetailData.cast} />
@@ -69,6 +73,7 @@ const DetailsView = () => {
     </>
   );
 };
+
 
 export const DetailsViewData = async ({ params }) => {
   return Promise.allSettled([
@@ -80,7 +85,10 @@ export const DetailsViewData = async ({ params }) => {
     axios(
       `http://api.themoviedb.org/3/movie/${params.id}/credits?api_key=${
         import.meta.env.VITE_TMDB_API_KEY
-      }`
+      }`,
+      axios(
+        `http://api.themoviedb.org/3/movie/${params.id}/genres?api_key=${import.meta.env.VITE_TMDB_API_KEY}`
+      ),
     ),
   ]).then((data) => {
     return {
